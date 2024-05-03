@@ -1,0 +1,11 @@
+artifacts/
+checkpoints/
+datasets/
+exps/
+venv/
+venv3/
+wandb/
+trained_model.pth
+config.yaml
+images/
+**__pycache__
