@@ -46,6 +46,7 @@ class Tester():
             transform_common=transform_builder.build_transform_common_validation(), 
             config=config, 
         )
+        print("Test dataset length: ",len(test_dataset))
         return test_dataset
     
     def test(self,index):
@@ -181,15 +182,20 @@ class Tester():
         plt.show()
         # Create the scatter plot
         mean_mae = [np.mean(x) for x in mae_score]
-        plt.scatter(gmacs, mean_mae)
+        # plt.boxplot(mae_score, positions=np.round(gmacs,1),widths=5)
+        standard_dev_mae = np.std(mae_score,axis=1)
+    
+        # plt.scatter(gmacs, mean_mae)
         # add grid
         plt.grid()
         # Add text next to each point
         for i, (x_val, y_val) in enumerate(zip(gmacs, mean_mae)):
-            plt.text(x_val+2, y_val, names[i], ha='left', va='center', size=10)
+            # plt.text(x_val+3, y_val, names[i], ha='left', va='center', size=10)
+            plt.errorbar(x_val, y_val, yerr=standard_dev_mae[i], fmt='o',label=names[i])
         plt.title('Mean Absolute Error vs Giga Multiply-Accumulates')
         # Add labels
         plt.xlabel('GMACS (in number of 10^9 operations)')
+        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
         plt.ylabel('Mean Absolute Error (unitless)')
         # Show the plot
         plt.show()
