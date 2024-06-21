@@ -1,3 +1,4 @@
+import time
 import torch
 import wandb
 from torch.utils.data import DataLoader
@@ -9,9 +10,9 @@ from torch.utils.data.distributed import DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed import init_process_group, destroy_process_group
 import os
-
-from ..models.model_builder import model_builder
-
+import copy
+from src.ml_orchestrator.transforms.CopyPasteAugmenter import CopyPasteAugmentation
+from src.models.model_builder import model_builder
 from .metrics.MAE_metric import MAEMetric
 
 from .loss.loss_builder import loss_builder
@@ -38,12 +39,18 @@ class Trainer:
     def train_model(self,train_loader, valid_loader, model, criterion, optimizer, scheduler, num_epochs=25):
 
         try:
+            
             for epoch in range(num_epochs):
+                start_epoch = time.time()
                 model.train()
                 running_loss = 0.0
                 if self.config['ml_orchestrator']['distributed_training']:
                     train_loader.sampler.set_epoch(epoch)
                 for i,batch in enumerate(train_loader):
+
+
+
+
                     inputs = batch['image'].to(self.device)
                     depth = batch['depth'].to(self.device)
                     masks = batch['mask'].to(self.device)
@@ -53,7 +60,7 @@ class Trainer:
 
                     outputs = model(inputs,depth)
 
-                    loss_total = criterion(outputs, masks, confidence,epoch)
+                    loss_total = criterion(outputs, masks, confidence,i,epoch)
 
                 
                     loss_total.backward()
@@ -75,7 +82,9 @@ class Trainer:
 
                 loss = running_loss/len(train_loader)
 
-                print(f"[GPU {self.rank}] Epoch {epoch+1}/{num_epochs}, Loss: {loss}")
+                end_epoch = time.time() 
+
+                print(f"[GPU {self.rank}] Epoch {epoch+1}/{num_epochs}, Loss: {loss}, Time: {(end_epoch-start_epoch)} seconds")
                 if self.rank == 0:
                     if epoch % self.config['ml_orchestrator']['valid_epoch'] == 0:
                         # Validation step
@@ -138,7 +147,7 @@ class Trainer:
 
                 outputs = model(inputs,depth)
                 
-                loss_total = criterion(outputs, masks, confidence,0 if not self.config['confidence'] else epoch)
+                loss_total = criterion(outputs, masks, confidence,i,epoch)
                 if not self.config['confidence']:
                     flat__outputs = outputs[0].reshape(-1) 
                     # outputs[1] = torch.where(masks >= self.config['cot']['wall_cot'], torch.zeros_like(outputs[1]), outputs[1])
@@ -189,13 +198,25 @@ def print_stats(train_dataset, valid_manually_labelled_dataset):
 
 def main(config=None):
     wandb.init(project=config['project_name'], name=config['exp_name'], config=config)
-    
+    # config = copy.deepcopy(wandb.config)
+    print(config)
     if config['ml_orchestrator']['distributed_training']:
         world_size = torch.cuda.device_count()
         print(f"World size: {world_size}")
         mp.spawn(train, args=(config,world_size), nprocs=world_size)
     else:
         train(0,config,1)
+def sweep():
+    wandb.init()
+    config =wandb.config
+    print(config)
+    if config['ml_orchestrator']['distributed_training']:
+        world_size = torch.cuda.device_count()
+        print(f"World size: {world_size}")
+        mp.spawn(train, args=(config,world_size), nprocs=world_size)
+    else:
+        train(0,config,1) 
+    
 
 def train(rank,config,world_size):
     
@@ -220,11 +241,38 @@ def train(rank,config,world_size):
     
     valid_manually_labelled_dataset = COTDataset(
         confidence=config['confidence'],
-        root_dir=check_file_path(dataset_folder,"valid_manually_labelled"), 
+        root_dir=check_file_path(dataset_folder,config['ml_orchestrator']['valid_dataset_name']), 
         transform_input=transform_builder.build_transforms_inputs_validation(),
         transform_common=transform_builder.build_transform_common_validation(), 
         config=config, 
     )
+    copyPasteAugmentation=CopyPasteAugmentation()
+    def collate_fn(batch):
+        """
+        Custom collate function to collate a list of samples into a single batch.
+        Args:
+            batch (list): List of dictionaries where each dictionary represents a single sample.
+        
+        Returns:
+            dict: A dictionary where each key contains a batched tensor.
+        """
+        # Use the first sample to get the keys
+        keys = batch[0].keys()
+
+        output={}
+        for key in keys:
+            data = [sample[key] for sample in batch]
+            if data[0] is None:
+                output[key]=None
+            elif isinstance(data[0], torch.Tensor):
+                output[key]=torch.stack(data)
+            else:
+                output[key]=data
+            
+        # Apply copyPasteAugmentation on the collated batch
+        if config['transforms']['copy_paste']:
+            output = copyPasteAugmentation(output)
+        return output
     if config['ml_orchestrator']['distributed_training']:
         train_loader = DataLoader(
             train_dataset, 
@@ -233,7 +281,8 @@ def train(rank,config,world_size):
             pin_memory=True,
             persistent_workers=config['ml_orchestrator']['persistent_workers'],
             num_workers=config['ml_orchestrator']['num_workers'],
-            sampler=DistributedSampler(train_dataset)
+            sampler=DistributedSampler(train_dataset),
+            collate_fn=collate_fn
         )
         valid_loader = DataLoader(
             valid_manually_labelled_dataset, 
@@ -249,7 +298,8 @@ def train(rank,config,world_size):
             shuffle=True,
             pin_memory=True,
             persistent_workers=config['ml_orchestrator']['persistent_workers'],
-            num_workers=config['ml_orchestrator']['num_workers']
+            num_workers=config['ml_orchestrator']['num_workers'],
+            collate_fn=collate_fn
         )
         valid_loader = DataLoader(
             valid_manually_labelled_dataset, 
@@ -265,7 +315,7 @@ def train(rank,config,world_size):
     
     plotter = Plotter(config=config)
 
-    if rank == 0:
+    if rank == 0 and config['ml_orchestrator']['showdata'] == True:
         for batch in train_loader:
             # limit batch to 4
             batch = {k: v[:4] for k, v in batch.items()}
@@ -278,7 +328,7 @@ def train(rank,config,world_size):
     if config['ml_orchestrator']['distributed_training']:
         model = DDP(model, device_ids=[rank])
     
-    criterion = loss_builder(config)
+    criterion = loss_builder(config,rank)
 
     if config['ml_orchestrator']['optimizer'] == 'adam':
         optimizer = optim.Adam(model.parameters(), lr=config['ml_orchestrator']['learning_rate'])

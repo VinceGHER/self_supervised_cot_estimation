@@ -32,10 +32,19 @@ class TransformBuilder:
 
     def build_transform_common(self):
         transforms_common = []
+        if 'rotate' in self.config:
+            transforms_common.append(v2.RandomRotation(degrees=self.config['rotate']))
         if 'horizontal_flip' in self.config:
             transforms_common.append(v2.RandomHorizontalFlip(p=self.config['horizontal_flip']))
         if 'resize' in self.config:
             transforms_common.append(v2.Resize(self.config['resize']['size'], interpolation=v2.InterpolationMode.NEAREST))
+        if 'resize_crop' in self.config:
+            transforms_common.append(v2.RandomResizedCrop(
+                size=self.config['resize_crop']['size'],
+                scale=self.config['resize_crop']['scale'],
+                ratio=self.config['resize_crop']['ratio'],
+                interpolation=v2.InterpolationMode.NEAREST
+            ))
         return v2.Compose(transforms_common)
     def build_transform_common_validation(self):
         transforms_common = []

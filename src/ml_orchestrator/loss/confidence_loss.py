@@ -7,7 +7,7 @@ import wandb
 from ...visualization.plotter import Plotter
 
 class ConfidenceLoss(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config,rank):
         """
         Initialize the custom loss function.
         
@@ -19,7 +19,8 @@ class ConfidenceLoss(nn.Module):
         self.config = config
         self.plotter = Plotter(config)
         self.tuning_parameter = 1
-    def forward(self, outputs, masks, confidence, epoch):
+        self.rank = rank
+    def forward(self, outputs, masks, confidence, i, epoch):
         """
         Compute the custom loss given the model inputs, reconstructions, outputs, and masks.
 
@@ -65,10 +66,10 @@ class ConfidenceLoss(nn.Module):
         # Total loss
         # loss_total = loss_trav + self.scale_factor * loss_recov
         loss_total = 10*loss_recov + mse_reco_pos_mean
+        if self.rank == 0 and i==0:
+            wandb.log({
+                f"plot_confidence": wandb.Image(self.plotter.plot_confidence(masks[0:4].detach(),confidence[0:4].detach())),
 
-        wandb.log({
-            f"plot_confidence": wandb.Image(self.plotter.plot_confidence(targets[0:4].detach(),confidence[0:4].detach())),
-
-        }, step=epoch)
+            }, step=epoch)
 
         return loss_total,confidence

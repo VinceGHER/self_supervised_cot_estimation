@@ -34,11 +34,13 @@ class COTDataset(Dataset):
         self.config = config
         self.confidence = confidence
 
+        assert len(self.rgb_files) == len(self.mask_files) == len(self.segmentation_files) == len(self.depth_files), "Number of files in each folder must be the same"
+
     def find_files(self, root_dir, name):
-        return [os.path.join(root_dir, name, file) for file in os.listdir(os.path.join(root_dir, name))]
+        return [os.path.join(root_dir, name, file) for file in sorted(os.listdir(os.path.join(root_dir, name)))]
 
     def __len__(self):
-        return len(self.rgb_files)
+        return len(self.mask_files)
 
 
 
