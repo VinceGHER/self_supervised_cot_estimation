@@ -11,15 +11,20 @@ from ..models.resnet_confidence import ResNet18Confidence
 from ..models.asymformer.AsymFormer import B0_T
 from ..models.dformer.models.builder import EncoderDecoder as segmodel
 from ..models.RGBX_Semantic_Segmentation.cmx import CMX
-
-
+from ..models.resnet_confidencev2 import ResNetAutoencoderV2
+from ..models.dino_confidence import DinoConfidence
 
 def model_builder(config):
-    if config['model'] == 'ResNetUnet':
-        return ResNetUnet(depth=config['depth'])
-    elif config['model'] == 'ResNet18Confidence':
+    model_name = config['model_builder']['model']
+    if model_name == 'ResNetUnet':
+        return ResNetUnet(depth=config['model_builder']['depth'])
+    elif model_name== 'ResNet18Confidence':
         return ResNet18Confidence()
-    elif config['model'] == 'AsymFormerB0_T':
+    elif model_name== 'ResNet18ConfidenceV2':
+        return ResNetAutoencoderV2()
+    elif model_name== 'DinoConfidence':
+        return DinoConfidence(config['cot']['wall_cot'],config['ml_orchestrator']['device'])
+    elif model_name == 'AsymFormerB0_T':
         model = B0_T(num_classes=1)
         # print(model)
         # s = torch.load('models/AsymFormer_NYUv2.pth')
@@ -29,22 +34,22 @@ def model_builder(config):
         # t = model.load_state_dict(state,strict=False)
         # assert t.missing_keys == ['Decoder.linear_pred.weight', 'Decoder.linear_pred.bias']
         return model
-    elif config['model'] == 'DFormer':
+    elif model_name== 'DFormer':
         BatchNorm2d = nn.BatchNorm2d
         config_path = "src.models.dformer.local_configs.NYUDepthv2.DFormer_Large"
         config = getattr(import_module(config_path), "C")
         model = segmodel(cfg=config, norm_layer=BatchNorm2d)
         return model
-    elif config['model'] == 'DeepLabV3Large':
+    elif model_name == 'DeepLabV3Large':
         return CustomDeepLabv3()
-    elif config['model']=='fcn_resnet50':
+    elif model_name=='fcn_resnet50':
         return FCN_resnet50()
-    elif config['model'] == 'SwinUnet':
+    elif model_name == 'SwinUnet':
         return SwinUNet(224, 224, 4, 32, 1,3,4)
-    elif config['model'] == 'SwinUnet480':
+    elif model_name == 'SwinUnet480':
         return SwinUNet(224, 224, 4, 32, 1,3,4)
-    elif config['model'] == 'CMX':
+    elif model_name== 'CMX':
         return CMX()
     else:
-        raise ValueError(f"Model {config['model']} not implemented")
+        raise ValueError(f"Model {model_name} not implemented")
     

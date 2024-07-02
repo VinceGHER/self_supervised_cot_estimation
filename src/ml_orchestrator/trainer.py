@@ -44,9 +44,10 @@ class Trainer:
                 start_epoch = time.time()
                 model.train()
                 running_loss = 0.0
+                i = 0
                 if self.config['ml_orchestrator']['distributed_training']:
                     train_loader.sampler.set_epoch(epoch)
-                for i,batch in enumerate(train_loader):
+                for batch in train_loader:
 
 
 
@@ -54,13 +55,14 @@ class Trainer:
                     inputs = batch['image'].to(self.device)
                     depth = batch['depth'].to(self.device)
                     masks = batch['mask'].to(self.device)
+                    segs = batch['seg'].to(self.device)
                     confidence = batch['confidence'].to(self.device)
 
                     optimizer.zero_grad()
 
-                    outputs = model(inputs,depth)
+                    outputs = model(inputs,depth,segs,masks)
 
-                    loss_total = criterion(outputs, masks, confidence,i,epoch)
+                    loss_total = criterion(outputs, masks, segs, confidence,i,epoch,plot=True)
 
                 
                     loss_total.backward()
@@ -79,7 +81,8 @@ class Trainer:
                             f"plot_training": wandb.Image(plot_image),
 
                         }, step=epoch)
-
+                        
+                    i+=1
                 loss = running_loss/len(train_loader)
 
                 end_epoch = time.time() 
@@ -137,17 +140,18 @@ class Trainer:
         self.r2_score.reset()   
         self.mse.reset()    
         self.mae.reset()
-
+        i = 0
         with torch.no_grad():
-            for i,batch in enumerate(loader):
+            for batch in loader:
                 inputs = batch['image'].to(device)
                 depth = batch['depth'].to(device)
                 masks = batch['mask'].to(device)
+                segs = batch['seg'].to(device)
                 confidence = batch['confidence'].to(device)
 
-                outputs = model(inputs,depth)
+                outputs = model(inputs,depth,segs,masks)
                 
-                loss_total = criterion(outputs, masks, confidence,i,epoch)
+                loss_total = criterion(outputs, masks, segs,confidence,i,epoch)
                 if not self.config['confidence']:
                     flat__outputs = outputs[0].reshape(-1) 
                     # outputs[1] = torch.where(masks >= self.config['cot']['wall_cot'], torch.zeros_like(outputs[1]), outputs[1])
@@ -175,7 +179,7 @@ class Trainer:
                         f"plot_{name}": wandb.Image(plot_image),
 
                     }, step=epoch)
-
+                i+=1
         valid_r2 = self.r2_score.compute()
         valid_mse = self.mse.compute()
         valid_mae = self.mae.compute()
@@ -246,7 +250,7 @@ def train(rank,config,world_size):
         transform_common=transform_builder.build_transform_common_validation(), 
         config=config, 
     )
-    copyPasteAugmentation=CopyPasteAugmentation()
+    copyPasteAugmentation=CopyPasteAugmentation(wallcot=config['cot']['wall_cot'])
     def collate_fn(batch):
         """
         Custom collate function to collate a list of samples into a single batch.
@@ -282,7 +286,7 @@ def train(rank,config,world_size):
             persistent_workers=config['ml_orchestrator']['persistent_workers'],
             num_workers=config['ml_orchestrator']['num_workers'],
             sampler=DistributedSampler(train_dataset),
-            collate_fn=collate_fn
+            collate_fn=collate_fn if config['transforms']['copy_paste'] else None
         )
         valid_loader = DataLoader(
             valid_manually_labelled_dataset, 
@@ -299,7 +303,7 @@ def train(rank,config,world_size):
             pin_memory=True,
             persistent_workers=config['ml_orchestrator']['persistent_workers'],
             num_workers=config['ml_orchestrator']['num_workers'],
-            collate_fn=collate_fn
+            collate_fn=collate_fn if config['transforms']['copy_paste'] else None
         )
         valid_loader = DataLoader(
             valid_manually_labelled_dataset, 
@@ -322,7 +326,7 @@ def train(rank,config,world_size):
             plotter.plot_batch_dataset(batch)
             break
 
-    model = model_builder(config['model_builder'])
+    model = model_builder(config)
     model.to(config['ml_orchestrator']['device'])
 
     if config['ml_orchestrator']['distributed_training']:

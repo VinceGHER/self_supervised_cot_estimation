@@ -15,7 +15,7 @@ class StandardLossUnlabelledNeg(nn.Module):
         self.config = config
         self.rank = rank
 
-    def forward(self, outputs, masks, confidence,i,epoch):
+    def forward(self, outputs, masks, segs, confidence,i,epoch,plot=False):
         """
         Compute the custom loss given the model inputs, reconstructions, outputs, and masks.
 

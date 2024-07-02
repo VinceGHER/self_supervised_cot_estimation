@@ -8,7 +8,7 @@ if __name__ == "__main__":
 
 
     config_model_builder = {
-        'model': {"values":["AsymFormerB0_T"]},
+        'model': {"values":["AsymFormerB0_T","DFormer","CMX","fcn_resnet50"]},
         'depth': {'values':[True]},
     }
 
@@ -61,26 +61,31 @@ if __name__ == "__main__":
         'resize': {
             'size': (480,640),
         },
+        'resize_crop': {
+            'size': (480,640),
+            'scale': (0.5, 1.0),
+            'ratio': (0.8, 1.2),
+        },
         'copy_paste': True,
     }
-    config_transforms2 = {
-        'normalize_input' : {
-            'mean': [0.485, 0.456, 0.406],
-            'std': [0.229, 0.224, 0.225],
-        },
-        'resize': {
-            'size': (480,640),
-        },
-        'copy_paste': False,
-    }
+    # config_transforms2 = {
+    #     'normalize_input' : {
+    #         'mean': [0.485, 0.456, 0.406],
+    #         'std': [0.229, 0.224, 0.225],
+    #     },
+    #     'resize': {
+    #         'size': (480,640),
+    #     },
+    #     'copy_paste': False,
+    # }
 
     config = {
-        'project_name': {'values':["traversability-estimation-v5"]},
+        'project_name': {'values':["traversability-estimation-v6"]},
         'exp_name': {'values':[f"exp-{config_model_builder['model']}-{wandb.util.generate_id()}"]},
         'model_builder': {'parameters':config_model_builder},
         'ml_orchestrator': {"parameters":config_ml_orchestrator},
         'cot':  {'values':[config_cot]},
-        'transforms': {'values':[config_transforms,config_transforms2]},
+        'transforms': {'values':[config_transforms]},
         'depth':  {'values':[config_depth]},
         'loss': {"parameters":config_loss},
         'confidence':{'values':[True]},

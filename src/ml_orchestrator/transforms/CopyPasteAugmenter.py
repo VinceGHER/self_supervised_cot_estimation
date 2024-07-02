@@ -3,13 +3,14 @@ from torchvision.transforms import v2
 import random
 
 class CopyPasteAugmentation:
-    def __init__(self, transform_prob=0.5,repeat=2,degres=(-70,70),translate=(0.1,0.5), scale=(0.5, 0.8),threshold_mask=0.1):
+    def __init__(self, wallcot,transform_prob=0.5,repeat=2,degres=(-70,70),translate=(0.1,0.5), scale=(0.5, 0.8),threshold_mask=0.1,unknowncot=0):
         # Probability to apply copy-paste augmentation
         self.transform_prob = transform_prob
         self.degres = degres
         self.translate = translate
         self.scale = scale
         self.threshold_mask = threshold_mask
+        self.wall_cot = wallcot
         self.transform = v2.Compose([
             v2.RandomAffine(degrees=self.degres, translate=self.translate, scale=self.scale),
         ])
@@ -30,6 +31,8 @@ class CopyPasteAugmentation:
     def apply_copy_paste(self, i, j, image_batch):
 
         mask_j = image_batch['mask'][j]
+        # set the mask to 0 for the wall cot
+        mask_j = torch.where(mask_j >= self.wall_cot, 0, mask_j)
         masks,counts = torch.unique(mask_j,return_counts=True)
         pourcentage = counts / torch.sum(counts)   
         masks = masks[torch.where(pourcentage > self.threshold_mask)]

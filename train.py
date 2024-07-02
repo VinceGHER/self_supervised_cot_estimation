@@ -6,7 +6,7 @@ if __name__ == "__main__":
     wandb.login()
 
     config_model_builder = {
-        'model': 'AsymFormerB0_T',
+        'model': 'CMX',
         'depth': True,
     }
 
@@ -15,7 +15,7 @@ if __name__ == "__main__":
         "epochs":500,
         'dataset_name': 'dataset-2024-06-12_12-33-29',
         'valid_dataset_name': 'valid_manually_labelled',
-        "batch_size": 12,
+        "batch_size": 4,
         "optimizer": "adamw",
         "device": "cuda",
         'num_workers': 8,

@@ -311,7 +311,7 @@ class SwinUNet(nn.Module):
         self.final_expansion = FinalPatchExpansion(C)
         self.head        = nn.Conv2d(C, num_class, 1,padding='same')
 
-    def forward(self, x,depth):
+    def forward(self, x,depth,segs,masks):
         x = torch.cat([x, depth], dim=1)
 
         x = torch.nn.functional.interpolate(x, size=(448, 448), mode='bilinear', align_corners=False)

@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Generate Dataset",
+            "name": "Python Debugger: Current File",
             "type": "debugpy",
             "request": "launch",
-            "program": "/home/gharib-ml/Desktop/master_thesis_v2/generate_dataset.py",
+            "program": "${file}",
             "console": "integratedTerminal"
         }
     ]

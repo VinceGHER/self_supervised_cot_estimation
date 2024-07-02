@@ -15,7 +15,7 @@ class FCN_resnet50(nn.Module):
         # Unfortunately, modifying the first convolution to accept 4 channels isn't as straightforward because
         # the MobileNetV3 model in torchvision doesn't have a simple conv1 attribute
         # This is a workaround, and might require more hands-on adjustments depending on your version of torchvision
-    def forward(self, x, depth):
+    def forward(self, x, depth,segs,masks):
         # Concatenate the RGB image with the depth map
 
         return self.deeplab(x)['out']

@@ -45,7 +45,7 @@ class ResNetUnet(nn.Module):
             ])
         return nn.Sequential(*layers)
 
-    def forward(self, x, depth=None):
+    def forward(self, x, depth=None,segs=None):
         # Encoder
         if self.depth:
             x = torch.cat([x, depth], dim=1)

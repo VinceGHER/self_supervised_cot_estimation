@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 import wandb
+import matplotlib.pyplot as plt
 
 from ...visualization.plotter import Plotter
 
@@ -20,7 +21,7 @@ class ConfidenceLoss(nn.Module):
         self.plotter = Plotter(config)
         self.tuning_parameter = 1
         self.rank = rank
-    def forward(self, outputs, masks, confidence, i, epoch):
+    def forward(self, outputs, masks, segs, confidence, i, epoch,plot=False):
         """
         Compute the custom loss given the model inputs, reconstructions, outputs, and masks.
 
@@ -41,8 +42,20 @@ class ConfidenceLoss(nn.Module):
         enc1_loss = torch.sum(enc1_loss,dim=1).unsqueeze(1)
 
         mse_reco_pos = enc1_loss[(masks < self.config['cot']['wall_cot'])&(masks > 0)]
+        mse_reco = enc1_loss
         mse_reco_pos_mean = mse_reco_pos.mean()
         mse_reco_pos_std= mse_reco_pos.std()
+
+        # plot distribution of confidence for mse_recov and mse_reco_pos
+        print("mse_recov",mse_reco.shape)
+        plt.figure()
+        plt.hist(mse_reco.reshape(-1).detach().cpu().numpy(), bins=500, alpha=0.5, label='Unlabeled samples')
+        # plt.yscale('log')
+        plt.hist(mse_reco_pos.detach().cpu().numpy(), bins=500, alpha=0.5, label='Labeled samples')
+        # plt.yscale('log')
+        plt.show()
+
+
         # print("mse_reco_pos_mean",mse_reco_pos_mean)
         # print("mse_reco_pos_std",mse_reco_pos_std)
         # Calculating the mse_trav and conditional loss_trav
@@ -61,6 +74,10 @@ class ConfidenceLoss(nn.Module):
         targets = torch.where(masks >= self.config['cot']['wall_cot'], torch.zeros_like(initial), initial)
         mse_recov = F.mse_loss(outputs, targets, reduction='none')
         mse_recov =  torch.sum(mse_recov,dim=1).unsqueeze(1)
+
+
+
+        
         loss_recov = mse_recov[masks > 0].mean()
   
         # Total loss

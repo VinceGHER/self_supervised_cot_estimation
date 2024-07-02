@@ -16,17 +16,17 @@ if __name__ == "__main__":
         "epochs": 100,
         'dataset_name': 'dataset-2024-06-12_12-33-29',
         'valid_dataset_name': 'valid',
-        "batch_size": 24,
+        "batch_size": 80,
         "optimizer": "adamw",
         "device": "cuda",
         'num_workers': 5,
-        "valid_epoch":20,
+        "valid_epoch":10,
         'persistent_workers': True,
-        'distributed_training': True,
+        'distributed_training': False,
         'showdata': False,
     }
     config_loss = {
-        'loss': 'ConfidenceLoss',
+        'loss': 'ConfidenceLossV2',
         'confidence_threshold': 0.1,
     }
     config_cot = {
@@ -41,6 +41,7 @@ if __name__ == "__main__":
         'min_depth': 0,
     }
     config_transforms = {
+
         'normalize_input' : {
             'mean': [0.485, 0.456, 0.406],
             'std': [0.229, 0.224, 0.225],
@@ -48,6 +49,8 @@ if __name__ == "__main__":
         'resize': {
             'size': (480,640)
         },
+        "copy_paste":True,
+        # 'rotate': (-180,180),
     }
 
     config = {

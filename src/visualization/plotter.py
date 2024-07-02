@@ -52,18 +52,33 @@ class Plotter:
         cax = divider.append_axes('right', size='5%', pad=0.05)
         fig.colorbar(im, cax=cax, orientation='vertical')
 
+    def plot_error_confidence(self,masks_error,masks_error_pos,masks_error_pos_mean,masks_error_pos_std,tuning_parameter):
+        # plot distribution of confidence for mse_recov and mse_reco_pos
+        fig, ax = plt.subplots(figsize=(10, 5))
+        ax.hist(masks_error, bins=500, alpha=1, label='All samples')
+        ax.hist(masks_error_pos, bins=500, alpha=1, label='Labeled samples')
+        ax.legend()
+
+        # draw the confidence map
+        x = np.linspace(np.min(masks_error), np.max(masks_error), 100)
+        y = np.exp(- (x-masks_error_pos_mean)**2 / (2*(masks_error_pos_std*tuning_parameter)**2) )
+        ax.plot(x, y, 'r', linewidth=2, label='Confidence')
+        
+        return self.generate_image(fig)
+    
+
     def plot_confidence(self,images,confidences):
-        fig, ax = plt.subplots(4, 2, figsize=(10, 5))
+        fig, ax = plt.subplots(4, 2, figsize=(16, 3*4))
         for i in range(4):
             image = images[i].cpu().permute(1, 2, 0).numpy()
             image = self.unnormalize_image(image[:,:,:3])
-            confidence = confidences[i].cpu().permute(1, 2, 0).numpy()
+            confidence = confidences[i].permute(1, 2, 0).numpy()
 
             ax[i,0].imshow(image)
             ax[i,0].set_title('Original Image')
             im1 = ax[i,1].imshow(confidence, cmap='nipy_spectral', vmin=0, vmax=1)
             ax[i,1].set_title('Confidence')
-            self.add_colorbar(ax[0,1],fig,im1)
+            self.add_colorbar(ax[i,1],fig,im1)
         return self.generate_image(fig)
     
     # def create_distribution_image(self, output_reco,cof,reco,reco_pos):
@@ -108,7 +123,7 @@ class Plotter:
             ax[i,1].imshow(depth[i], cmap='nipy_spectral', vmin=0, vmax=1)
             ax[i,1].set_title('Depth')
 
-            ax[i,2].imshow(predicted_masks[i], alpha=0.75,cmap='nipy_spectral', vmin=vmin, vmax=vmax)
+            ax[i,2].imshow(predicted_masks[i][:,:,:3], alpha=0.75,cmap='nipy_spectral', vmin=vmin, vmax=vmax)
             ax[i,2].set_title('Predicted Mask')
             ax[i,3].imshow(img)
             im2 = ax[i,3].imshow(masks[i], alpha=0.75,cmap='nipy_spectral', vmin=vmin, vmax=vmax)
