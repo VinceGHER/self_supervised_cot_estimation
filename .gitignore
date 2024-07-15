@@ -14,3 +14,5 @@ asymformer**
 models/
 venv2
 mmseg
+config*
+trained_model*

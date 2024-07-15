@@ -52,4 +52,3 @@ def model_builder(config):
         return CMX()
     else:
         raise ValueError(f"Model {model_name} not implemented")
-    

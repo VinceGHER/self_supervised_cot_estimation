@@ -8,13 +8,13 @@ if __name__ == "__main__":
 
 
     config_model_builder = {
-        'model': {"values":["AsymFormerB0_T","DFormer","CMX","fcn_resnet50"]},
+        'model': {"values":["DFormer"]},
         'depth': {'values':[True]},
     }
 
     config_ml_orchestrator = {
         "learning_rate": {"values": [1e-4]},  # Sweep through different learning rates
-        "epochs":  {'values':[150]},
+        "epochs":  {'values':[100]},
         'valid_dataset_name':  {'values':['valid_manually_labelled']},
         'dataset_name':  {'values':['dataset-2024-06-12_12-33-29']},
         "batch_size":  {'values':[4]},
@@ -27,7 +27,8 @@ if __name__ == "__main__":
         'showdata':  {'values':[False]},
     }
     config_loss = {
-        'loss': {'values':['TraversabilityLossL1','StandardLossUnlabelledNeg','StandardLoss']},
+        # 'loss': {'values':['StandardLoss','TraversabilityLossL1','StandardLossUnlabelledNeg']},
+        'loss': {'values':['StandardLoss']},
         'confidence_threshold':  {'values':[0.5]},
     }
     config_cot = {
@@ -80,7 +81,7 @@ if __name__ == "__main__":
     # }
 
     config = {
-        'project_name': {'values':["traversability-estimation-v6"]},
+        'project_name': {'values':["traversability-estimation-v10"]},
         'exp_name': {'values':[f"exp-{config_model_builder['model']}-{wandb.util.generate_id()}"]},
         'model_builder': {'parameters':config_model_builder},
         'ml_orchestrator': {"parameters":config_ml_orchestrator},
@@ -96,8 +97,19 @@ if __name__ == "__main__":
         "method": "grid",  # Change this to "random" for random search
         "parameters": config,  # Use the config dictionary you want to sweep
     }
+    import sys
 
-    sweep_id = wandb.sweep(sweep_config, project=config['project_name']['values'][0])
+    # total arguments
+    n = len(sys.argv)
+    if (n>2):
+        print("Error: Too many arguments")
+    print("Total arguments passed:", n)
+    if (n==1):
+        sweep_id = wandb.sweep(sweep_config, project=config['project_name']['values'][0])
     # sweep_id="vincekillerz/traversability-estimation-v3/vwihdauy"
+    if (n==2):
+        sweep_id = sys.argv[1]
+    print(f"sweep_id: {sweep_id}")
+
     wandb.agent(sweep_id, function=sweep)
     

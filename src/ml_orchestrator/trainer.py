@@ -33,6 +33,7 @@ class Trainer:
 
         self.rank = rank
         self.config = config
+        self.best_val_loss = float('inf')
 
 
 
@@ -113,6 +114,14 @@ class Trainer:
                         if scheduler is not None:
                             metrics.update({'scheduler':scheduler.get_last_lr()[0]})
                         wandb.log(metrics, step=epoch)
+                        c_valid_loss = valid_metrics['valid_mae_valid_manually_labelled']
+                        if c_valid_loss < self.best_val_loss:
+                            self.best_val_loss = c_valid_loss
+                            print(f"Best model achived: Saving model with loss: {c_valid_loss}")
+                            if self.config['ml_orchestrator']['distributed_training']:
+                                torch.save(model.module.state_dict(), "trained_model"+wandb.run.id+".pth")
+                            else:
+                                torch.save(model.state_dict(), "trained_model"+wandb.run.id+".pth")
                     else:
                         wandb.log({"loss": loss}, step=epoch)
                 
@@ -124,12 +133,8 @@ class Trainer:
         finally:
             print('Finished Training')
             if self.rank == 0:
-                if self.config['ml_orchestrator']['distributed_training']:
-                    torch.save(model.module.state_dict(), "trained_model.pth")
-                else:
-                    torch.save(model.state_dict(), "trained_model.pth")
                 # save config as config using yaml
-                with open("config.yaml", "w") as f:
+                with open("config"+wandb.run.id+".yaml", "w") as f:
                     yaml.dump(wandb.config.as_dict(), f)
 
             
@@ -213,6 +218,9 @@ def main(config=None):
 def sweep():
     wandb.init()
     config =wandb.config
+    import sys
+    if len(sys.argv) > 1:
+        config['ml_orchestrator']['device'] = 'cuda:1'
     print(config)
     if config['ml_orchestrator']['distributed_training']:
         world_size = torch.cuda.device_count()
@@ -223,7 +231,7 @@ def sweep():
     
 
 def train(rank,config,world_size):
-    
+    print("Starting training with run id: ",wandb.run.id)
     if config['ml_orchestrator']['distributed_training']:
         os.environ["MASTER_ADDR"] = "localhost"
         os.environ["MASTER_PORT"] = "12355"
@@ -347,8 +355,8 @@ def train(rank,config,world_size):
 
     if rank == 0:
         artifact = wandb.Artifact(name="saved_model", type="model")
-        artifact.add_file("trained_model.pth")
-        artifact.add_file("config.yaml")
+        artifact.add_file("trained_model"+wandb.run.id+".pth", name="trained_model.pth")
+        artifact.add_file("config"+wandb.run.id+".yaml",name="config.yaml")
         wandb.log_artifact(artifact)
         wandb.finish()
     if config['ml_orchestrator']['distributed_training']:

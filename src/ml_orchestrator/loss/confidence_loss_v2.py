@@ -83,8 +83,6 @@ class ConfidenceLossV2(nn.Module):
                 for e in pos_map[h][:,1]:
                     confidences_batch[h][segs[h] == e] = confidence[index_confidence]
                     index_confidence+=1
-                if plot and h >=4:
-                    break
             # filter outliers
             reco_error_mask = batch_map.detach().cpu().numpy().flatten()
             reco_pos = flat_reco_error_pos.detach().cpu().numpy().flatten()
@@ -92,17 +90,78 @@ class ConfidenceLossV2(nn.Module):
             masks_error_pos = reject_outliers(np.array(reco_pos))
             
             
+            if return_confidence and plot:
+
+                plt.rcParams.update({'font.size': 14})
+                images = inputs[0:4].detach().cpu()
+                confidences = confidences_batch[0:4].detach().cpu()
+
+                fig, ax1 = plt.subplots(figsize=(10, 5))
+
+                # Title
+                ax1.set_title('Reconstruction Loss Histogram with Confidence')
+
+                # Histogram for all samples
+                ax1.hist(masks_error, bins=100, alpha=1, label='All samples')
+
+                # Histogram for labeled samples
+                ax1.hist(masks_error_pos,range=(np.min(masks_error),np.max(masks_error)), bins=100, alpha=1, label='Labeled samples')
+
+                # Labels for the first y-axis (error)
+                ax1.set_xlabel('Reconstruction Error')
+                ax1.set_ylabel('Frequency')
+                ax1.legend(loc='upper left')
+
+                # Create a second y-axis for the confidence
+                ax2 = ax1.twinx()
+                # handle 
+                tuning_parameter=2
+                # Draw the confidence map
+                masks_error_pos_= masks_error_pos_mean.cpu().detach().numpy()
+                mask_error_std= masks_error_pos_std.cpu().detach().numpy()
+                x = np.linspace(np.min(masks_error), np.max(masks_error), 100)
+                y = np.exp(- (x - masks_error_pos_)**2 / (2 * (mask_error_std * tuning_parameter)**2))
+                y[x < masks_error_pos_] = 1
+                ax2.plot(x, y, 'r', linewidth=2, label='Confidence')
+
+                # Labels for the second y-axis (confidence)
+                ax2.set_ylabel('Confidence')
+                # add a vertical line dashed
+                ax1.axvline(0.012, linewidth=2,color='black', linestyle='--', label='Decision boundary')
+
+                # Combine legends from both axes
+                lines_1, labels_1 = ax1.get_legend_handles_labels()
+                lines_2, labels_2 = ax2.get_legend_handles_labels()
+                ax1.legend(lines_1 + lines_2, labels_1 + labels_2, loc='upper right')
+
+                plt.show()
+                            
+             
+                fig, ax = plt.subplots(4, 2, figsize=(16, 3*4))
+                for i in range(4):
+                    image = images[i].cpu().permute(1, 2, 0).numpy()
+                    image = self.plotter.unnormalize_image(image[:,:,:3])
+                    confidence = confidences[i].permute(1, 2, 0).numpy()
+
+                    ax[i,0].imshow(image)
+                    ax[i,0].set_title('Original Image')
+                    im1 = ax[i,1].imshow(confidence, vmin=0, vmax=1)
+                    ax[i,1].set_title('Confidence')
+                    ax[i,1].axis('off')
+                    self.plotter.add_colorbar(ax[i,1],fig,im1)
+                fig.tight_layout()
+                plt.show()
             if return_confidence:
                 return confidences_batch
 
             
 
+            if plot and not return_confidence:
+                wandb.log({
+                    f"plot_confidence": wandb.Image(self.plotter.plot_confidence(inputs[0:4].detach().cpu(),confidences_batch[0:4].detach())),
 
-            wandb.log({
-                f"plot_confidence": wandb.Image(self.plotter.plot_confidence(inputs[0:4].detach().cpu(),confidences_batch[0:4].detach())),
-
-                f"distribution": wandb.Image(self.plotter.plot_error_confidence(masks_error,masks_error_pos,masks_error_pos_mean.cpu().detach().numpy(),masks_error_pos_std.cpu().detach().numpy(),tuning_parameter)),
-            }, step=epoch)
+                    f"distribution": wandb.Image(self.plotter.plot_error_confidence(masks_error,masks_error_pos,masks_error_pos_mean.cpu().detach().numpy(),masks_error_pos_std.cpu().detach().numpy(),tuning_parameter)),
+                }, step=epoch)
 
         targets = torch.where(masks >= self.wall_cot, torch.zeros_like(inputs), inputs)
         mse_recov = F.mse_loss(outputs, targets, reduction='none')

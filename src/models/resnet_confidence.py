@@ -39,7 +39,7 @@ class ResNet18Confidence(nn.Module):
         enc1 = self.encoder_part1(initial)
         x = self.encoder_part2(enc1)
         x = self.decoder_part1(x)
-        
+        print(x.shape)
         dec1 = self.decoder_part2(x)
         x = self.decoder_part3(dec1)
         # x = nn.functional.interpolate(x, size=(480, 640), mode='bilinear')

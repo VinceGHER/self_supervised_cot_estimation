@@ -6,7 +6,7 @@ if __name__ == "__main__":
     wandb.login()
 
     config_model_builder = {
-        'model': 'CMX',
+        'model': 'AsymFormerB0_T',
         'depth': True,
     }
 
@@ -17,7 +17,7 @@ if __name__ == "__main__":
         'valid_dataset_name': 'valid_manually_labelled',
         "batch_size": 4,
         "optimizer": "adamw",
-        "device": "cuda",
+        "device": "cuda:1",
         'num_workers': 8,
         'persistent_workers': True,
         "valid_epoch":2,
@@ -25,7 +25,7 @@ if __name__ == "__main__":
         'showdata': True,
     }
     config_loss = {
-        'loss': 'TraversabilityLossL1',
+        'loss': 'StandardLoss',
         'confidence_threshold': 0.5,
     }
     config_cot = {

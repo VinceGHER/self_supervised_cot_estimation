@@ -135,7 +135,7 @@ class Plotter:
 
         return self.generate_image(fig)  
 
-       
+    
     def unnormalize_image(self, image):
         if 'normalize_input' in self.config['transforms']:
             image = image * self.config['transforms']['normalize_input']['std'] + self.config['transforms']['normalize_input']['mean']

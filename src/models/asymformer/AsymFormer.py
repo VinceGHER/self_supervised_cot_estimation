@@ -243,7 +243,7 @@ class B0_T(nn.Module):
                                    norm_layer=nn.BatchNorm2d,
                                    embed_dim=256)
 
-    def forward(self, image, depth,segs,masks):
+    def forward(self, image, depth, segs, masks):
         input_shape = image.shape[-2:]
 
         rgb_out, depth_out1 = self.down_sample_1(image, depth)
