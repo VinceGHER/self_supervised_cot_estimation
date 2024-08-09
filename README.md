@@ -51,19 +51,28 @@ run commands in packages.txt
    ```bash
    python generate_confidence.py
    ```
-3. **Confidence Annotation**: Annotate confidence scores using `generate_confidence.py`.
-```bash
-python generate_confidence.py
+3. **Confidence Annotation**: Annotate confidence scores using `annotate_confidence_v2.py`.
+```
+run the annotate confidence notebook
 ```
 
 4. **Training**: Train your models using `train.py`.
    ```bash
    python train.py
    ```
-5. **Inference**: Run inference using `infer.py` or `inference.py`.
-   ```bash
-   python infer.py
+5. **Export ONNX**: Run export_onnx to create a onnx model.
    ```
+   run export_onxx.ipynb 
+   ```
+6. **Export trt**: Use trtexec to optimize the model for fast inference
+   ```bash
+   /usr/src/tensorrt/bin/trtexec --onnx=asymformer-v6.onnx --saveEngine=asymformer-v6.trt
+   ```
+
+7. **Infer using the  traversability estimation repo**: 
+```
+see https://github.com/VinceGHER/traversability_estimation
+ ```
 
 ### Notebooks
 
