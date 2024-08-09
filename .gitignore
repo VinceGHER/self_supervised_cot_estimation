@@ -16,3 +16,5 @@ venv2
 mmseg
 config*
 trained_model*
+cloud.ply
+reconstructed_mesh*

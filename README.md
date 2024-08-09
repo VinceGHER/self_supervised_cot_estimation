@@ -74,7 +74,7 @@ Feel free to fork this repository and contribute by submitting pull requests. Pl
 
 ## License
 
-This project is licensed under the License at the root of the project (See `LICENSE`).
+This project is licensed under the License at the root of the project (see `LICENSE`).
 
 ## Contact
 
