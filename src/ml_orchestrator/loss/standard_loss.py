@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class StandardLoss(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config,rank):
         """
         Initialize the custom loss function.
         
@@ -13,8 +13,9 @@ class StandardLoss(nn.Module):
         """
         super(StandardLoss, self).__init__()
         self.config = config
+        self.rank = rank
 
-    def forward(self, outputs, masks, confidence,epoch):
+    def forward(self, outputs, masks, confidence,i,epoch):
         """
         Compute the custom loss given the model inputs, reconstructions, outputs, and masks.
 
@@ -29,7 +30,7 @@ class StandardLoss(nn.Module):
         """
 
         # targets = torch.where(masks == 0, torch.ones_like(masks)*self.config['cot']['wall_cot'], masks)
-        mse_loss = F.mse_loss(outputs, masks, reduction='none')
+        mse_loss = F.l1_loss(outputs, masks, reduction='none')
 
         # Filtering the MSE loss based on the mask condition
         # confidence and not masks

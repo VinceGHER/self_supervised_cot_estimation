@@ -313,6 +313,9 @@ class SwinUNet(nn.Module):
 
     def forward(self, x,depth):
         x = torch.cat([x, depth], dim=1)
+
+        x = torch.nn.functional.interpolate(x, size=(448, 448), mode='bilinear', align_corners=False)
+
         x = self.patch_embed(x)
 
         x,skip_ftrs  = self.encoder(x)
@@ -324,6 +327,8 @@ class SwinUNet(nn.Module):
         x = self.final_expansion(x)
 
         x = self.head(x.permute(0,3,1,2))
+
+        x = torch.nn.functional.interpolate(x, size=(480, 640), mode='bilinear', align_corners=False)
 
         return x
 if __name__ == "__main__":

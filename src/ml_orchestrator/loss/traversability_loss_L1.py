@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class TraversabilityLossL1(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config,rank):
         """
         Initialize the custom loss function.
         
@@ -13,8 +13,9 @@ class TraversabilityLossL1(nn.Module):
         """
         super(TraversabilityLossL1, self).__init__()
         self.config = config
+        self.rank = rank
 
-    def forward(self, outputs, masks, confidence,epoch):
+    def forward(self, outputs, masks, confidence,i,epoch):
         """
         Compute the custom loss given the model inputs, reconstructions, outputs, and masks.
 

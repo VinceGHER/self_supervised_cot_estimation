@@ -116,6 +116,7 @@ class Comparer():
 
     def compare(self, exp: Experiment,save_video=False):
         masks= os.listdir(exp.mask_path)
+        masks.sort()
         fig, axes = plt.subplots(1, 2,figsize=(12.8,7.2))  # Create subplots once
         ax0, ax1 = axes
     
@@ -158,7 +159,7 @@ class Comparer():
         if save_video:
             print("Saving video...")
             date = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            filename = f"visulisation_{date}.mp4"
+            filename = f"visualisation_{date}.mp4"
             ani.save(filename=os.path.join(exp.get_experiment_folder(), filename), writer="ffmpeg")
             print(f"Video saved as {filename}")
         # ani = animation.FuncAnimation(

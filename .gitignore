@@ -11,3 +11,6 @@ images/
 **__pycache__
 src/models/dformer
 asymformer**
+models/
+venv2
+mmseg

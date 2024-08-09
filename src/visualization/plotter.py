@@ -54,8 +54,7 @@ class Plotter:
 
     def plot_confidence(self,images,confidences):
         fig, ax = plt.subplots(4, 2, figsize=(10, 5))
-        nb_image = len(images)
-        for i in range(nb_image):
+        for i in range(4):
             image = images[i].cpu().permute(1, 2, 0).numpy()
             image = self.unnormalize_image(image[:,:,:3])
             confidence = confidences[i].cpu().permute(1, 2, 0).numpy()
