@@ -14,7 +14,6 @@ This paper addresses the challenge of autonomous navigation for robots in real e
 - `analyze_dataset.ipynb` - Notebook for dataset analysis.
 - `annoate_confidence.ipynb` - Notebook for confidence annotation.
 - `annoate_confidence_v2.ipynb` - Updated notebook for confidence annotation.
-- `copy_of_crate.obj` - 3D object file.
 - `export_onxx.ipynb` - Notebook for exporting models to ONNX format.
 - `export_pcd_ply.ipynb` - Notebook for exporting point clouds.
 - `generate_confidence.py` - Script for generating confidence scores.
@@ -22,7 +21,6 @@ This paper addresses the challenge of autonomous navigation for robots in real e
 - `generate_valid.ipynb` - Notebook for generating validation data.
 - `infer.py` - Script for running inference.
 - `inference.py` - Script for inference with additional options.
-- `my_texture_name.png` - Texture image used in the project.
 - `old` - Directory containing old versions of scripts and notebooks.
 - `packages.txt` - List of required packages.
 - `src` - Source code directory.
@@ -38,8 +36,8 @@ This paper addresses the challenge of autonomous navigation for robots in real e
 
 Ensure you have the necessary packages installed. You can install them using:
 
-```bash
-pip install -r packages.txt
+```
+run commands in packages.txt
 ```
 
 ### Running the Project
@@ -53,13 +51,16 @@ pip install -r packages.txt
    ```bash
    python generate_confidence.py
    ```
+3. **Confidence Annotation**: Annotate confidence scores using `generate_confidence.py`.
+```bash
+python generate_confidence.py
+```
 
-3. **Training**: Train your models using `train.py`.
+4. **Training**: Train your models using `train.py`.
    ```bash
    python train.py
    ```
-
-4. **Inference**: Run inference using `infer.py` or `inference.py`.
+5. **Inference**: Run inference using `infer.py` or `inference.py`.
    ```bash
    python infer.py
    ```
@@ -71,10 +72,6 @@ pip install -r packages.txt
 ## Contributing
 
 Feel free to fork this repository and contribute by submitting pull requests. Please ensure that your contributions adhere to the project's coding standards.
-
-## License
-
-This project is licensed under the License at the root of the project (see `LICENSE`).
 
 ## Contact
 
