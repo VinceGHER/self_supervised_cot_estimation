@@ -84,4 +84,4 @@ Feel free to fork this repository and contribute by submitting pull requests. Pl
 
 ## Contact
 
-For any questions or suggestions, please open an issue or contact at vincent@gherold.com
+For any questions or suggestions, please open an issue or contact at vgherold@caltech.edu
