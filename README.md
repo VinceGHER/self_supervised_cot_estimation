@@ -1,5 +1,7 @@
 # Self-supervised cost of transport estimation for multimodal path planning
 
+![Pipeline (1)](https://github.com/user-attachments/assets/402570a8-9d4b-452f-8723-7bf639a38f49)
+
 ## Overview
 
 This paper addresses the challenge of autonomous navigation for robots in real environments by developing a self-supervised learning method that enables a robot to estimate the cost of transport using only vision inputs. The method is applied to the multi-modal mobility morphobot (M4), which can drive, fly, segway, and crawl. By using this approach, the robot can autonomously choose the most energetically efficient mode of locomotion for different environments. The system, which is tested in real-world scenarios, accurately assesses transport costs for various terrains and operates efficiently on an Nvidia Jetson Orin Nano compute unit. This work aims to enhance the navigational and exploratory capabilities of multi-modal robotic platforms.
